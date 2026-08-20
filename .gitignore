@@ -1,0 +1,83 @@
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ==============================
+# Jupyter Notebook
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# IDE / Editor
+# ==============================
+.vscode/
+.idea/
+
+# ==============================
+# Operating System
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Environment variables / secrets
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# Project data
+# ==============================
+data/raw/*
+data/processed/*
+data/predictions/*
+
+# Keep documentation/placeholders
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/predictions/.gitkeep
+!data/README.md
+
+# ==============================
+# Trained models / artifacts
+# ==============================
+models/*
+!models/.gitkeep
+*.pkl
+*.joblib
+*.h5
+*.keras
+
+# ==============================
+# MLflow
+# ==============================
+mlruns/
+mlartifacts/
+
+# ==============================
+# Testing / coverage
+# ==============================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==============================
+# Logs
+# ==============================
+*.log
+
+# ==============================
+# Build / package files
+# ==============================
+build/
+dist/
+*.egg-info/
