@@ -2,68 +2,144 @@ import numpy as np
 import pandas as pd
 
 
-def add_calendar_features(data: pd.DataFrame) -> pd.DataFrame:
+def add_calendar_features(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
     """
-    Add calendar-based features for demand forecasting.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Preprocessed M5 data containing a date column.
-
-    Returns
-    -------
-    pd.DataFrame
-        Data with additional calendar features.
+    Add calendar and continuous time-trend features.
     """
     data = data.copy()
 
     data["date"] = pd.to_datetime(data["date"])
 
-    data["day_of_week"] = data["date"].dt.dayofweek
-    data["day_of_month"] = data["date"].dt.day
-    data["week_of_year"] = data["date"].dt.isocalendar().week.astype(int)
-    data["quarter"] = data["date"].dt.quarter
+    data["day"] = (
+        data["date"]
+        .dt.day
+        .astype("int8")
+    )
+
+    data["dayofweek"] = (
+        data["date"]
+        .dt.dayofweek
+        .astype("int8")
+    )
+
+    data["week"] = (
+        data["date"]
+        .dt.isocalendar()
+        .week
+        .astype("int8")
+    )
+
+    data["quarter"] = (
+        data["date"]
+        .dt.quarter
+        .astype("int8")
+    )
+
+    data["dayofyear"] = (
+        data["date"]
+        .dt.dayofyear
+        .astype("int16")
+    )
 
     data["is_weekend"] = (
-        data["day_of_week"]
-        .isin([5, 6])
-        .astype(int)
-    )
+        data["dayofweek"] >= 5
+    ).astype("int8")
+
+    data["time_idx"] = (
+        data["date"]
+        - data["date"].min()
+    ).dt.days.astype("int16")
 
     return data
-def add_cyclical_features(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add cyclical encodings for periodic calendar variables.
-    """
-    data = data.copy()
 
-    data["dow_sin"] = np.sin(
-        2 * np.pi * data["day_of_week"] / 7
-    )
-
-    data["dow_cos"] = np.cos(
-        2 * np.pi * data["day_of_week"] / 7
-    )
-
-    return data
-def add_event_features(data: pd.DataFrame) -> pd.DataFrame:
+def add_cyclical_features(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
     """
-    Add binary event indicators from the M5 calendar fields.
+    Add cyclical calendar encodings.
     """
     data = data.copy()
 
-    data["has_event_1"] = data["event_name_1"].notna().astype(int)
-    data["has_event_2"] = data["event_name_2"].notna().astype(int)
+    data["dow_sin"] = (
+        np.sin(
+            2 * np.pi
+            * data["dayofweek"]
+            / 7
+        )
+        .astype("float32")
+    )
 
-    data["has_any_event"] = (
-        (data["has_event_1"] == 1)
-        | (data["has_event_2"] == 1)
-    ).astype(int)
+    data["dow_cos"] = (
+        np.cos(
+            2 * np.pi
+            * data["dayofweek"]
+            / 7
+        )
+        .astype("float32")
+    )
+
+    data["month_sin"] = (
+        np.sin(
+            2 * np.pi
+            * data["month"]
+            / 12
+        )
+        .astype("float32")
+    )
+
+    data["month_cos"] = (
+        np.cos(
+            2 * np.pi
+            * data["month"]
+            / 12
+        )
+        .astype("float32")
+    )
+
+    data["doy_sin"] = (
+        np.sin(
+            2 * np.pi
+            * data["dayofyear"]
+            / 365.25
+        )
+        .astype("float32")
+    )
+
+    data["doy_cos"] = (
+        np.cos(
+            2 * np.pi
+            * data["dayofyear"]
+            / 365.25
+        )
+        .astype("float32")
+    )
 
     return data
 
+def add_event_features(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Add indicators for calendar events.
+    """
+    data = data.copy()
+
+    data["is_event_day"] = (
+        data["event_name_1"]
+        .notna()
+        .astype("int8")
+    )
+
+    data["has_two_events"] = (
+        data["event_name_2"]
+        .notna()
+        .astype("int8")
+    )
+
     return data
+
 def add_snap_features(data: pd.DataFrame) -> pd.DataFrame:
     """
     Add the applicable SNAP indicator for each store's state.
@@ -365,6 +441,45 @@ def add_rolling_summary_features(
     )
 
     return data
+
+def add_momentum_features(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Add demand momentum features derived from leakage-safe lag values.
+    """
+    data = data.copy()
+
+    data["change_1_vs_7"] = (
+        data["lag_1"]
+        - data["lag_7"]
+    ).astype("float32")
+
+    data["change_7_vs_14"] = (
+        data["lag_7"]
+        - data["lag_14"]
+    ).astype("float32")
+
+    data["change_7_vs_28"] = (
+        data["lag_7"]
+        - data["lag_28"]
+    ).astype("float32")
+
+    data["ratio_7_vs_28"] = (
+        data["lag_7"]
+        / data["lag_28"].replace(0, np.nan)
+    )
+
+    data["ratio_7_vs_28"] = (
+        data["ratio_7_vs_28"]
+        .replace([np.inf, -np.inf], np.nan)
+        .fillna(1.0)
+        .clip(0, 5)
+        .astype("float32")
+    )
+
+    return data
+
 def add_dynamic_features(
     data: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -374,6 +489,7 @@ def add_dynamic_features(
     data = add_lag_features(data)
     data = add_rolling_features(data)
     data = add_rolling_summary_features(data)
+    data = add_momentum_features(data)
 
     return data
 
