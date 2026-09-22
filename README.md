@@ -12,47 +12,40 @@ The project compares traditional machine learning and deep learning approaches f
 
 \## Project Status
 
+The core forecasting and model-serving pipeline is implemented.
 
+Completed components:
 
-🚧 Work in progress
+- M5 data loading and preprocessing
+- Store-category demand aggregation
+- Exploratory data analysis
+- Leakage-safe feature engineering
+- Time-based train/validation/test splitting
+- Seasonal-naive forecasting baseline
+- Random Forest and XGBoost model development
+- Expanding-window cross-validation and hyperparameter tuning
+- Final model selection and untouched test evaluation
+- MLflow experiment tracking and model persistence
+- FastAPI model-serving API
+- Automated data-loading and API tests
 
+The selected Random Forest model achieved:
 
+| Metric | Random Forest | Seasonal Naive |
+|---|---:|---:|
+| MAE | 126.05 | 157.90 |
+| RMSE | 212.98 | 262.85 |
+| WAPE | 8.60% | 10.77% |
+| Bias | -4.74% | -3.91% |
 
-The original forecasting analysis was developed as a deep learning project. The repository is being refactored into a modular, production-style machine learning pipeline.
+The Random Forest reduced WAPE by approximately 20% relative to the
+horizon-safe seasonal-naive benchmark.
 
+### Remaining Work
 
-
-\## Planned Components
-
-
-
-\- Exploratory data analysis
-
-\- Data preprocessing and validation
-
-\- Time-series feature engineering
-
-\- Baseline forecasting
-
-\- Random Forest and XGBoost
-
-\- Deep neural networks
-
-\- LSTM models
-
-\- Time-series cross-validation
-
-\- Forecast evaluation
-
-\- Experiment tracking
-
-\- Automated testing
-
-\- Prediction pipeline
-
-\- Interactive forecasting application
-
-\- Containerization and deployment
+- Containerize the application with Docker
+- Add CI/CD with GitHub Actions
+- Finalize documentation and repository cleanup
 
 
 

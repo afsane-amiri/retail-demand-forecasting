@@ -81,3 +81,8 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# MLflow local tracking
+mlflow.db
+mlruns/
+mlartifacts/
