@@ -10,7 +10,6 @@ mock_model = MagicMock()
 mock_model.predict.return_value = np.array([125.5])
 
 main.model = mock_model
-main.model_run_id = "test-run-id"
 
 
 client = TestClient(main.app)
@@ -70,9 +69,11 @@ def test_health():
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
-    assert response.json()["model"] == "random_forest"
-    assert response.json()["model_run_id"] == "test-run-id"
+
+    assert response.json() == {
+        "status": "healthy",
+        "model": "random_forest",
+    }
 
 
 def test_predict():

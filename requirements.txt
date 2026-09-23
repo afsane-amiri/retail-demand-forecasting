@@ -1,0 +1,9 @@
+pandas
+numpy
+scikit-learn==1.7.2
+xgboost==2.0.3
+mlflow==3.16.1
+joblib
+fastapi==0.136.1
+uvicorn==0.46.0
+pytest==9.1.1

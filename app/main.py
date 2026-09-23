@@ -1,29 +1,24 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import mlflow
-import mlflow.sklearn
+import joblib
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 
 # ---------------------------------------------------------------------
-# Project and MLflow configuration
+# Project and model configuration
 # ---------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-MLFLOW_DB = PROJECT_ROOT / "mlflow.db"
-
-MLFLOW_TRACKING_URI = MLFLOW_DB.as_uri().replace(
-    "file:///",
-    "sqlite:///",
+MODEL_PATH = (
+    PROJECT_ROOT
+    / "models"
+    / "production_model"
+    / "model.joblib"
 )
-
-EXPERIMENT_NAME = "retail-demand-forecasting"
-MODEL_RUN_NAME = "final_random_forest"
-
 
 
 # ---------------------------------------------------------------------
@@ -87,60 +82,27 @@ class PredictionResponse(BaseModel):
 # ---------------------------------------------------------------------
 
 def load_production_model():
-    """
-    Load the most recent successful final Random Forest run
-    from the MLflow experiment.
-    """
+    """Load the exported production model."""
 
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-
-    experiment = mlflow.get_experiment_by_name(
-        EXPERIMENT_NAME
-    )
-
-    if experiment is None:
+    if not MODEL_PATH.exists():
         raise RuntimeError(
-            f"MLflow experiment '{EXPERIMENT_NAME}' was not found."
+            f"Production model was not found at: {MODEL_PATH}"
         )
 
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        filter_string=(
-            "attributes.status = 'FINISHED' "
-            f"AND tags.mlflow.runName = '{MODEL_RUN_NAME}'"
-        ),
-        order_by=["start_time DESC"],
-        max_results=1,
-    )
-
-    if runs.empty:
-        raise RuntimeError(
-            "No successful final Random Forest run was found."
-        )
-
-    run_id = runs.iloc[0]["run_id"]
-
-    model_uri = f"runs:/{run_id}/model"
-
-    model = mlflow.sklearn.load_model(
-        model_uri
-    )
-
-    return model, run_id
+    return joblib.load(MODEL_PATH)
 
 
 # Load the model once when the API starts.
 model = None
-model_run_id = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load the production model once when the API starts."""
 
-    global model, model_run_id
+    global model
 
-    model, model_run_id = load_production_model()
+    model = load_production_model()
 
     yield
 
@@ -179,7 +141,6 @@ def health() -> dict[str, str]:
     return {
         "status": "healthy",
         "model": "random_forest",
-        "model_run_id": model_run_id,
     }
 
 
